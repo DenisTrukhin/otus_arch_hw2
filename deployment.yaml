@@ -93,7 +93,7 @@ spec:
         spec:
             containers:
                 -   name: otus-hw2
-                    image: washburn62/otus_trukhin_hw2:v1
+                    image: washburn62/otus_trukhin_hw2:v2
                     env:
                         -   name: DATABASE_URL
                             value: postgresql+psycopg2://myuser:passwd@postgres/myapp
