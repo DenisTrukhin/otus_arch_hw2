@@ -34,9 +34,7 @@ users = sqlalchemy.Table(
     sqlalchemy.Column("phone", sqlalchemy.String),
 )
 
-engine = sqlalchemy.create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}
-)
+engine = sqlalchemy.create_engine(DATABASE_URL)
 metadata.create_all(engine)
 
 

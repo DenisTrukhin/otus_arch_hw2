@@ -19,6 +19,20 @@ spec:
     selector:
         app: postgres
 ---
+apiVersion: v1
+kind: Service
+metadata:
+    name: hw2-service
+    namespace: hw2-app
+spec:
+    selector:
+        app: hw2
+    ports:
+        -   protocol: TCP
+            port: 8000
+            targetPort: web
+    type: NodePort
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -61,3 +75,28 @@ spec:
                 resources:
                     requests:
                         storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: hw2-deployment
+    namespace: hw2-app
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: hw2
+    template:
+        metadata:
+            labels:
+                app: hw2
+        spec:
+            containers:
+                -   name: otus-hw2
+                    image: washburn62/otus_trukhin_hw2:v1
+                    env:
+                        -   name: DATABASE_URL
+                            value: postgresql+psycopg2://myuser:passwd@postgres/myapp
+                    ports:
+                        -   name: web
+                            containerPort: 8000
