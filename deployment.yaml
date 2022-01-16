@@ -93,10 +93,30 @@ spec:
         spec:
             containers:
                 -   name: otus-hw2
-                    image: washburn62/otus_trukhin_hw2:v3
+                    image: washburn62/otus_trukhin_hw2:v4
                     env:
                         -   name: DATABASE_URL
                             value: postgresql+psycopg2://myuser:passwd@postgres/myapp
                     ports:
                         -   name: web
                             containerPort: 8000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+    name: hw2-ingress
+    namespace: hw2-app
+    annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+    rules:
+    - host: arch.homework
+      http:
+          paths:
+            - path: /(.*)
+              pathType: Prefix
+              backend:
+                  service:
+                      name: hw2-service
+                      port:
+                          number: 8000

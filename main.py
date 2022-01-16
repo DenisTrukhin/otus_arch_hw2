@@ -48,7 +48,7 @@ async def shutdown():
     await database.disconnect()
 
 
-@app.post("/user", response_model=User)
+@app.post("/user")
 async def create_user(user: User):
     query = users.insert().values(
         username=user.username, first_name=user.first_name, last_name=user.last_name, email=user.email, phone=user.phone
@@ -57,11 +57,15 @@ async def create_user(user: User):
     return {"success": True, "id": new_user_id}
 
 
-@app.get("/user/{user_id}", response_model=User)
+@app.get("/user/{user_id}")
 async def get_user(user_id: int):
     query = users.select().where(users.columns.id == user_id)
     user = await database.fetch_one(query)
-    return {"success": True, "user": {**user}}
+    if user:
+        result = {"success": True, **user}
+    else:
+        result = {"success": False, "reason": f"Пользователь с id={user_id} не найден"}
+    return result
 
 
 @app.put("/user/{user_id}")
