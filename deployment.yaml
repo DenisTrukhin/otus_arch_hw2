@@ -6,6 +6,26 @@ metadata:
         name: hw2-app
 ---
 apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: hw2-config
+    namespace: hw2-app
+data:
+    POSTGRES_DB: myapp
+    POSTGRES_USER: myuser
+    POSTGRES_HOST: postgres
+---
+apiVersion: v1
+kind: Secret
+metadata:
+    name: hw2-secret
+    namespace: hw2-app
+type: Opaque
+data:
+    DATABASE_URL: cG9zdGdyZXNxbCtwc3ljb3BnMjovL215dXNlcjpwYXNzd2RAcG9zdGdyZXMvbXlhcHAK
+    POSTGRES_PASSWORD: cGFzc3dkCg==
+---
+apiVersion: v1
 kind: Service
 metadata:
     name: postgres
@@ -57,11 +77,20 @@ spec:
                             name: postgredb
                     env:
                         -   name: POSTGRES_DB
-                            value: myapp
+                            valueFrom:
+                                configMapKeyRef:
+                                    name: hw2-config
+                                    key: POSTGRES_DB
                         -   name: POSTGRES_USER
-                            value: myuser
+                            valueFrom:
+                                configMapKeyRef:
+                                    name: hw2-config
+                                    key: POSTGRES_USER
                         -   name: POSTGRES_PASSWORD
-                            value: passwd
+                            valueFrom:
+                                secretKeyRef:
+                                    name: hw2-secret
+                                    key: POSTGRES_PASSWORD
                     volumeMounts:
                         -   name: postgredb
                             mountPath: /var/lib/postgresql/data
@@ -96,10 +125,60 @@ spec:
                     image: washburn62/otus_trukhin_hw2:v4
                     env:
                         -   name: DATABASE_URL
-                            value: postgresql+psycopg2://myuser:passwd@postgres/myapp
+                            valueFrom:
+                                secretKeyRef:
+                                    name: hw2-secret
+                                    key: DATABASE_URL
                     ports:
                         -   name: web
                             containerPort: 8000
+---
+#apiVersion: batch/v1
+#kind: Job
+#metadata:
+#    name: hw2-job
+#    namespace: hw2-app
+#spec:
+#    template:
+#        metadata:
+#            name: hw2-job
+#        spec:
+#            restartPolicy: Never
+#            containers:
+#                -   name: post-install-job
+#                    image: postgres:latest
+#                    env:
+#                        -   name: POSTGRES_DB
+#                            valueFrom:
+#                                configMapKeyRef:
+#                                    name: hw2-config
+#                                    key: POSTGRES_DB
+#                        -   name: POSTGRES_USER
+#                            valueFrom:
+#                                configMapKeyRef:
+#                                    name: hw2-config
+#                                    key: POSTGRES_USER
+#                        -   name: POSTGRES_PASSWORD
+#                            valueFrom:
+#                                secretKeyRef:
+#                                    name: hw2-secret
+#                                    key: POSTGRES_PASSWORD
+#                        -   name: POSTGRES_HOST
+#                            valueFrom:
+#                                configMapKeyRef:
+#                                    name: hw2-config
+#                                    key: POSTGRES_HOST
+#                    command:
+#                        - sh
+#                        - "-c"
+#                        - |
+#                            psql postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST/$POSTGRES_DB <<'EOF'
+#                              insert into users (id, username, first_name, last_name, email, phone) values (1, 'Starik', 'Vladimir', 'Ylyanov', 'lenin1870@yandex.ru', '+74950000001');
+#                              insert into users (id, username, first_name, last_name, email, phone) values (2, 'Koba', 'Joseph', 'Dzhugashvili', 'stalin1878@yandex.ru', '+74950000002');
+#                              insert into users (id, username, first_name, last_name, email, phone) values (2, 'Pero', 'Leiba', 'Bronstein', 'trotsky1879@yandex.ru', '+74950000003');
+#                            EOF
+#
+#    backoffLimit: 0
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -110,13 +189,13 @@ metadata:
         nginx.ingress.kubernetes.io/rewrite-target: /$1
 spec:
     rules:
-    - host: arch.homework
-      http:
-          paths:
-            - path: /(.*)
-              pathType: Prefix
-              backend:
-                  service:
-                      name: hw2-service
-                      port:
-                          number: 8000
+        -   host: arch.homework
+            http:
+                paths:
+                    -   path: /(.*)
+                        pathType: Prefix
+                        backend:
+                            service:
+                                name: hw2-service
+                                port:
+                                    number: 8000
