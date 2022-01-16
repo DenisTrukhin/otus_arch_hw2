@@ -61,7 +61,7 @@ async def create_user(user: User):
 async def get_user(user_id: int):
     query = users.select().where(users.columns.id == user_id)
     user = await database.fetch_one(query)
-    return {"success": True, "user": user}
+    return {"success": True, "user": {**user}}
 
 
 @app.put("/user/{user_id}")
