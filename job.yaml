@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+    name: hw2-job
+    namespace: hw2-app
+spec:
+    template:
+        metadata:
+            name: hw2-job
+        spec:
+            restartPolicy: Never
+            containers:
+                -   name: post-install-job
+                    image: postgres:latest
+                    env:
+                        -   name: POSTGRES_DB
+                            valueFrom:
+                                configMapKeyRef:
+                                    name: hw2-config
+                                    key: POSTGRES_DB
+                        -   name: POSTGRES_USER
+                            valueFrom:
+                                configMapKeyRef:
+                                    name: hw2-config
+                                    key: POSTGRES_USER
+                        -   name: POSTGRES_PASSWORD
+                            valueFrom:
+                                secretKeyRef:
+                                    name: hw2-secret
+                                    key: POSTGRES_PASSWORD
+                        -   name: POSTGRES_HOST
+                            valueFrom:
+                                configMapKeyRef:
+                                    name: hw2-config
+                                    key: POSTGRES_HOST
+                    command:
+                        - sh
+                        - "-c"
+                        - |
+                            psql postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST/$POSTGRES_DB <<'EOF'
+                              insert into users (id, username, first_name, last_name, email, phone) values (1, 'Starik', 'Vladimir', 'Ylyanov', 'lenin1870@yandex.ru', '+74950000001');
+                              insert into users (id, username, first_name, last_name, email, phone) values (2, 'Koba', 'Joseph', 'Dzhugashvili', 'stalin1878@yandex.ru', '+74950000002');
+                              insert into users (id, username, first_name, last_name, email, phone) values (3, 'Pero', 'Leiba', 'Bronstein', 'trotsky1879@yandex.ru', '+74950000003');
+                            EOF
+
+    backoffLimit: 0
