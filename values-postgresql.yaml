@@ -1,0 +1,8 @@
+global:
+  postgresql:
+    postgresqlDatabase: "myapp"
+    postgresqlUsername: "myuser"
+    existingSecret: ""
+    postgresqlPassword: "passwd"
+    servicePort: "5432"
+

@@ -37,7 +37,7 @@ spec:
                         - sh
                         - "-c"
                         - |
-                            psql postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST/$POSTGRES_DB <<'EOF'
+                            psql postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB <<'EOF'
                               insert into users (id, username, first_name, last_name, email, phone) values (1, 'Starik', 'Vladimir', 'Ylyanov', 'lenin1870@yandex.ru', '+74950000001');
                               insert into users (id, username, first_name, last_name, email, phone) values (2, 'Koba', 'Joseph', 'Dzhugashvili', 'stalin1878@yandex.ru', '+74950000002');
                               insert into users (id, username, first_name, last_name, email, phone) values (3, 'Pero', 'Leiba', 'Bronstein', 'trotsky1879@yandex.ru', '+74950000003');
