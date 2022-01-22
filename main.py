@@ -61,22 +61,42 @@ async def create_user(user: User):
 async def get_user(user_id: int):
     query = users.select().where(users.columns.id == user_id)
     user = await database.fetch_one(query)
+
     if user:
         result = {"success": True, **user}
     else:
         result = {"success": False, "reason": f"Пользователь с id={user_id} не найден"}
+
     return result
 
 
 @app.put("/user/{user_id}")
-async def update_user(user_id: int, user: Optional[User] = None):
-    query = users.update().values(**user.dict()).where(users.columns.id == user_id)
-    await database.execute(query)
-    return {"success": True}
+async def update_user(user_id: int, user_data: Optional[User] = None):
+    user_query = users.select().where(users.columns.id == user_id)
+    user = await database.fetch_one(user_query)
+
+    if user:
+        user_data = {k: v for k, v in user_data.dict().items() if v}
+        update_query = users.update().values(**user_data).where(users.columns.id == user_id)
+        await database.execute(update_query)
+        user = await database.fetch_one(user_query)
+        result = {"success": True, **user}
+    else:
+        result = {"success": False, "reason": f"Пользователь с id={user_id} не найден"}
+
+    return result
 
 
 @app.delete("/user/{user_id}")
 async def delete_user(user_id: int):
-    query = users.delete().where(users.columns.id == user_id)
-    await database.execute(query)
-    return {"success": True}
+    user_query = users.select().where(users.columns.id == user_id)
+    user = await database.fetch_one(user_query)
+
+    if user:
+        delete_query = users.delete().where(users.columns.id == user_id)
+        await database.execute(delete_query)
+        result = {"success": True}
+    else:
+        result = {"success": False, "reason": f"Пользователь с id={user_id} не найден"}
+
+    return result
