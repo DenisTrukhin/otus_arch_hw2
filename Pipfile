@@ -11,6 +11,8 @@ uvicorn = "*"
 sqlalchemy = "*"
 databases = {extras = ["postgresql"],version = "*"}
 psycopg2 = "*"
+prometheus-client = "*"
+prometheus-fastapi-instrumentator = "*"
 
 [requires]
-python_version = "3.6"
+python_version = "3.7"

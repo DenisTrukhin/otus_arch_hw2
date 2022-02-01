@@ -1,11 +1,14 @@
 import os
+import time
 from typing import Optional
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from pydantic import BaseModel
 import databases
 import sqlalchemy
 
+from metrics import METRICS_REQUEST_COUNT, METRICS_REQUEST_LATENCY
+from prometheus_client import start_http_server
 
 DATABASE_URL = os.environ.get('DATABASE_URL', '')
 
@@ -40,12 +43,23 @@ metadata.create_all(engine)
 
 @app.on_event("startup")
 async def startup():
+    start_http_server(port=9090)
     await database.connect()
 
 
 @app.on_event("shutdown")
 async def shutdown():
     await database.disconnect()
+
+
+@app.middleware("http")
+async def calculate_metrics(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    request_latency = time.time() - start_time
+    METRICS_REQUEST_LATENCY.labels(request.method, request.url.path).observe(request_latency)
+    METRICS_REQUEST_COUNT.labels(request.method, request.url.path, response.status_code).inc()
+    return response
 
 
 @app.post("/user")

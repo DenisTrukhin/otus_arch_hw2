@@ -57,7 +57,7 @@ spec:
         spec:
             containers:
                 -   name: otus-hw2
-                    image: washburn62/otus_trukhin_hw2:v7
+                    image: washburn62/otus_trukhin_hw2:v9
                     env:
                         -   name: DATABASE_URL
                             valueFrom:
