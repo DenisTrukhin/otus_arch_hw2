@@ -1,16 +1,24 @@
 import os
 import time
 from typing import Optional
-
-from fastapi import FastAPI, Request
-from pydantic import BaseModel
 import databases
 import sqlalchemy
+from prometheus_client import Counter, Histogram, Info, start_http_server, generate_latest
+from fastapi import FastAPI, Request
+from pydantic.main import BaseModel
 
-from metrics import METRICS_REQUEST_COUNT, METRICS_REQUEST_LATENCY
-from prometheus_client import start_http_server
+app = FastAPI()
 
-DATABASE_URL = os.environ.get('DATABASE_URL', '')
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
+METRICS_REQUEST_LATENCY = Histogram(
+    "app_request_latency_seconds", "Application Request Latency", ["method", "endpoint"]
+)
+METRICS_REQUEST_COUNT = Counter(
+    "app_request_count",
+    "Application Request Count",
+    ["method", "endpoint", "http_status"],
+)
+METRICS_INFO = Info("app_version", "Application Version")
 
 
 class User(BaseModel):
@@ -21,11 +29,8 @@ class User(BaseModel):
     phone: Optional[str] = None
 
 
-app = FastAPI()
 database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
-
-
 users = sqlalchemy.Table(
     "users",
     metadata,
@@ -57,15 +62,28 @@ async def calculate_metrics(request: Request, call_next):
     start_time = time.time()
     response = await call_next(request)
     request_latency = time.time() - start_time
-    METRICS_REQUEST_LATENCY.labels(request.method, request.url.path).observe(request_latency)
-    METRICS_REQUEST_COUNT.labels(request.method, request.url.path, response.status_code).inc()
+    METRICS_REQUEST_LATENCY.labels(request.method, request.url.path).observe(
+        request_latency
+    )
+    METRICS_REQUEST_COUNT.labels(
+        request.method, request.url.path, response.status_code
+    ).inc()
     return response
+
+
+@app.get('/metrics')
+def metrics():
+    return generate_latest()
 
 
 @app.post("/user")
 async def create_user(user: User):
     query = users.insert().values(
-        username=user.username, first_name=user.first_name, last_name=user.last_name, email=user.email, phone=user.phone
+        username=user.username,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        email=user.email,
+        phone=user.phone,
     )
     new_user_id = await database.execute(query)
     return {"success": True, "id": new_user_id}
@@ -91,7 +109,9 @@ async def update_user(user_id: int, user_data: Optional[User] = None):
 
     if user:
         user_data = {k: v for k, v in user_data.dict().items() if v}
-        update_query = users.update().values(**user_data).where(users.columns.id == user_id)
+        update_query = (
+            users.update().values(**user_data).where(users.columns.id == user_id)
+        )
         await database.execute(update_query)
         user = await database.fetch_one(user_query)
         result = {"success": True, **user}
