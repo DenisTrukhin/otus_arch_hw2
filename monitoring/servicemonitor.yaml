@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: hw3-servicemonitor
+  namespace: monitoring
+  labels:
+    app: hw2
+spec:
+  namespaceSelector:
+    matchNames:
+    - monitoring
+  selector:
+    matchLabels:
+        app: hw2
+  endpoints:
+  - interval: 15s
+    port: web
+    path: /metrics
