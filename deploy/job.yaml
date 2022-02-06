@@ -2,7 +2,6 @@ apiVersion: batch/v1
 kind: Job
 metadata:
     name: hw2-job
-    namespace: hw2-app
 spec:
     template:
         metadata:

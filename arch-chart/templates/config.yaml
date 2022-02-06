@@ -2,11 +2,10 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
     name: hw2-config
-    namespace: hw2-app
 data:
     POSTGRES_DB: myapp
     POSTGRES_USER: myuser
-    POSTGRES_HOST: postgres-postgresql.default.svc.cluster.local
+    POSTGRES_HOST: {{ printf "%s.%s.svc.cluster.local" (include "postgresql.fullname" .) .Release.Namespace }}
     POSTGRES_PORT: "5432"
 ---
 apiVersion: v1
@@ -15,5 +14,5 @@ metadata:
   name: hw2-secret
 type: Opaque
 data:
-  DATABASE_URL: {{ printf "postgresql+psycopg2://%s:%s@%s:%s/%s" .Values.externalPostgresql.postgresqlUsername .Values.externalPostgresql.postgresqlPassword .Values.externalPostgresql.postgresqlHost .Values.externalPostgresql.postgresqlPort .Values.externalPostgresql.postgresqlDatabase  | b64enc | quote }}
-  POSTGRES_PASSWORD: {{ printf .Values.externalPostgresql.postgresqlPassword  | b64enc | quote }}
+  DATABASE_URL: {{ printf "postgresql+psycopg2://%s:%s@%s:%s/%s" .Values.postgresql.postgresqlUsername .Values.postgresql.postgresqlPassword (include "postgresql.fullname" .) .Values.postgresql.service.port .Values.postgresql.postgresqlDatabase  | b64enc | quote }}
+  POSTGRES_PASSWORD: {{ printf .Values.postgresql.postgresqlPassword  | b64enc | quote }}
